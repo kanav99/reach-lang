@@ -58,9 +58,19 @@ docs:
 
 .PHONY: sh-lint
 sh-lint:
-	@(set -e; for f in $$(find . -not \( \( -path '*openzeppelin*' -o -path '*/node_modules/*' \) -prune \) -name '*.sh') ./reach; do \
-		echo linting $$f; \
-		shellcheck --external-sources --source-path SCRIPTDIR $$f ; \
+	@(set -e; for f in \
+	    $$(find . \
+	      -not \( -path '*/node_modules/*' -prune \) \
+	      -not \( -path './hs/app/reach/embed/*' -prune \) \
+	      -not \( -path '*openzeppelin*' -prune \) \
+	      -name '*.sh') \
+	      ./reach; do \
+	  echo linting $$f; \
+	  shellcheck --external-sources --source-path SCRIPTDIR $$f ; \
+	done)
+	@(set -e; for f in $$(find ./hs/app/reach/embed -name '*.sh'); do \
+	  echo linting $$f; \
+	  shellcheck --external-sources --source-path SCRIPTDIR --exclude 2148 $$f ; \
 	done)
 
 # (cd hs && stack install hadolint)
