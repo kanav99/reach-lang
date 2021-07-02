@@ -164,19 +164,28 @@ export class Contract implements IContract {
         // Note: this usage of `.call` here is because javascript is insane.
         // XXX 2021-06-14 Dan: This works for the cjs compilation target, but does it work for the other targets?
         // @ts-ignore
-        const transactionReceipt = await self._contract[fname].call(...argsConformed).sendTransaction(txn).executed();
-        debug(`cfxers:handler`, fname, 'receipt');
-        debug(transactionReceipt);
-        const { transactionHash } = transactionReceipt;
-        return {
-          // XXX not sure what the distinction is supposed to be here
-          wait: async () => {
-            debug('cfxers:handler', fname, 'wait');
-            return {
-              transactionHash
-            };
-          }
-        };
+        const cmc = self._contract[fname].call(...argsConformed);
+        debug(`cfxers:handler`, `cfx ctc method call`, cmc);
+        const {to, data} = cmc;
+        const txnDat = {...txn, to, data};
+        debug(`cfxers:handler`, `cfx ctc method txn`, txnDat);
+        if (!this._wallet.provider) throw Error(`impossible: no provider for wallet; cannot send txn`);
+        // const resultP = await _retryingSendTxn(this._wallet.provider, txnDat);
+        // const transactionReceipt = await cmc.sendTransaction(txn).executed();
+
+        // debug(`cfxers:handler`, fname, 'receipt');
+        // debug(transactionReceipt);
+        // const { transactionHash } = transactionReceipt;
+        return await _retryingSendTxn(this._wallet.provider, txnDat);
+        // {
+        //   // XXX not sure what the distinction is supposed to be here
+        //   wait: async () => {
+        //     debug('cfxers:handler', fname, 'wait');
+        //     return {
+        //       transactionHash
+        //     };
+        //   }
+        // };
       } else {
         debug(`cfxers:handler`, fname, 'view')
         // XXX in this case it doesn't return something with `wait`,
@@ -384,9 +393,10 @@ async function _retryingSendTxn(provider: providers.Provider, txnOrig: object): 
     try {
       // Note: {...txn} because conflux is going to mutate it >=[
       txnMut = {...txnOrig};
+      debug(`_retryingSendTxn attempt`, txnOrig);
       const transactionHashP = provider.conflux.sendTransaction(txnMut);
       const transactionHash = await transactionHashP;
-      // debug(`_retryingSendTxn success`, {txnOrig, txnMut, transactionHash});
+      debug(`_retryingSendTxn success`, {txnOrig, txnMut, transactionHash});
       updateSentAt(addr, txnMut.epochHeight);
       return {
         transactionHash,
@@ -399,11 +409,10 @@ async function _retryingSendTxn(provider: providers.Provider, txnOrig: object): 
       }
     } catch (e) {
       err = e;
-      // debug({
-      //   message: `retrying sendTxn attempt failed`,
-      //   txnOrig, txnMut,
-      //   e, tries, max_tries
-      // });
+      debug(`_retryingSendTxn fail`, {
+        txnOrig, txnMut,
+        e, tries, max_tries
+      });
       continue;
     }
   }
