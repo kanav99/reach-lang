@@ -81,9 +81,16 @@ commands:
           version: '20.10.6'
   restore_bin:
     description: "Restore the build binaries"
+    parameters:
+      with_srd_no:
+        type: boolean
+        default: true
     steps:
       - workattach
-      - srd_no
+      - when:
+          condition: << parameters.with_srd_no >>
+          steps:
+            - srd_no
       - run: |
           mkdir -p ~/.local
           ln -sf /tmp/workspace/bin ~/.local/bin
@@ -353,7 +360,8 @@ jobs:
     executor: adhoc-machine
     steps:
     - checkout
-    - restore_bin
+    - restore_bin:
+        with_srd_no: false
     - restore_img_adhoc_machine
     - run_example_sh:
         which: << parameters.which >>
