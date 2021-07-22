@@ -57,15 +57,6 @@ CFX.raffle
 
 # TODO remove below: ###
 
-# Contract bytecode does not match expected bytecode
-ETH.chicken-fork
-ETH.chicken-parallel
-ETH.chicken-race
-ETH.race
-ETH.workshop-hash-lock
-ETH.workshop-relay
-ETH.workshop-trust-fund
-
 # Needs `docker-compose` restructuring
 ETH.tut-8
 
