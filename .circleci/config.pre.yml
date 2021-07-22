@@ -93,24 +93,26 @@ commands:
           docker tag reachsh/runner:latest reachsh/runner:${VERSION}
           docker tag reachsh/runner:latest reachsh/runner:${MAJOR}.${MINOR}
           docker tag reachsh/runner:latest reachsh/runner:${MAJOR}
+  restore_img_adhoc_machine:
+    description: "Restore ad-hoc machine Docker images"
+    steps:
+      - workattach
+      - run: |
+          zcat /tmp/workspace/docker/rpc-server.tar.gz | docker load
+          zcat /tmp/workspace/docker/reach.tar.gz      | docker load
+          zcat /tmp/workspace/docker/reach-cli.tar.gz  | docker load
 
-          if [ "$REACH_CI_EXECUTOR" = "adhoc-machine" ]; then
-            zcat /tmp/workspace/docker/rpc-server.tar.gz | docker load
-            zcat /tmp/workspace/docker/reach.tar.gz      | docker load
-            zcat /tmp/workspace/docker/reach-cli.tar.gz  | docker load
+          docker tag reachsh/rpc-server:latest reachsh/rpc-server:${VERSION}
+          docker tag reachsh/rpc-server:latest reachsh/rpc-server:${MAJOR}.${MINOR}
+          docker tag reachsh/rpc-server:latest reachsh/rpc-server:${MAJOR}
 
-            docker tag reachsh/rpc-server:latest reachsh/rpc-server:${VERSION}
-            docker tag reachsh/rpc-server:latest reachsh/rpc-server:${MAJOR}.${MINOR}
-            docker tag reachsh/rpc-server:latest reachsh/rpc-server:${MAJOR}
+          docker tag reachsh/reach:latest      reachsh/reach:${VERSION}
+          docker tag reachsh/reach:latest      reachsh/reach:${MAJOR}.${MINOR}
+          docker tag reachsh/reach:latest      reachsh/reach:${MAJOR}
 
-            docker tag reachsh/reach:latest      reachsh/reach:${VERSION}
-            docker tag reachsh/reach:latest      reachsh/reach:${MAJOR}.${MINOR}
-            docker tag reachsh/reach:latest      reachsh/reach:${MAJOR}
-
-            docker tag reachsh/reach-cli:latest  reachsh/reach-cli:${VERSION}
-            docker tag reachsh/reach-cli:latest  reachsh/reach-cli:${MAJOR}.${MINOR}
-            docker tag reachsh/reach-cli:latest  reachsh/reach-cli:${MAJOR}
-          fi
+          docker tag reachsh/reach-cli:latest  reachsh/reach-cli:${VERSION}
+          docker tag reachsh/reach-cli:latest  reachsh/reach-cli:${MAJOR}.${MINOR}
+          docker tag reachsh/reach-cli:latest  reachsh/reach-cli:${MAJOR}
   run_example_sh:
     description: "example.sh <<parameters.which>>"
     parameters:
@@ -351,6 +353,7 @@ jobs:
     steps:
     - checkout
     - restore_bin
+    - restore_img_adhoc_machine
     - run_example_sh:
         which: << parameters.which >>
     - run_example_record
