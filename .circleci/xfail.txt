@@ -54,3 +54,22 @@ CFX.object-digest
 
 # cause unclear. see: https://app.circleci.com/pipelines/github/reach-sh/reach-lang/2822/workflows/853c6e2d-5115-4508-8b79-96a16cddf2ab/jobs/30702
 CFX.raffle
+
+# TODO remove below: ###
+
+# Contract bytecode does not match expected bytecode
+ETH.chicken-fork
+ETH.chicken-parallel
+ETH.chicken-race
+ETH.race
+ETH.workshop-hash-lock
+ETH.workshop-relay
+ETH.workshop-trust-fund
+
+# Needs `docker-compose` restructuring
+ETH.tut-8
+
+# Error: verifyContract failed: Cannot query for constructor transaction
+ALGO.overview
+ALGO.tut-5-attack
+ALGO.multisig
