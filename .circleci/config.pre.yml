@@ -24,6 +24,18 @@ executors:
     environment:
       LC_ALL: "en_US.UTF-8"
 
+  adhoc-machine:
+    parameters:
+      class:
+        description: "resource class"
+        default: "medium"
+        type: string
+    machine:
+      image: "ubuntu-2004:202104-01"
+    resource_class: <<parameters.class>>
+    environment:
+      LC_ALL: "en_US.UTF-8"
+
 commands:
   workattach:
     steps:
@@ -81,6 +93,51 @@ commands:
           docker tag reachsh/runner:latest reachsh/runner:${VERSION}
           docker tag reachsh/runner:latest reachsh/runner:${MAJOR}.${MINOR}
           docker tag reachsh/runner:latest reachsh/runner:${MAJOR}
+
+          if [ "$REACH_CI_EXECUTOR" = "adhoc-machine" ]; then
+            zcat /tmp/workspace/docker/rpc-server.tar.gz | docker load
+            zcat /tmp/workspace/docker/reach.tar.gz      | docker load
+            zcat /tmp/workspace/docker/reach-cli.tar.gz  | docker load
+
+            docker tag reachsh/rpc-server:latest reachsh/rpc-server:${VERSION}
+            docker tag reachsh/rpc-server:latest reachsh/rpc-server:${MAJOR}.${MINOR}
+            docker tag reachsh/rpc-server:latest reachsh/rpc-server:${MAJOR}
+
+            docker tag reachsh/reach:latest      reachsh/reach:${VERSION}
+            docker tag reachsh/reach:latest      reachsh/reach:${MAJOR}.${MINOR}
+            docker tag reachsh/reach:latest      reachsh/reach:${MAJOR}
+
+            docker tag reachsh/reach-cli:latest  reachsh/reach-cli:${VERSION}
+            docker tag reachsh/reach-cli:latest  reachsh/reach-cli:${MAJOR}.${MINOR}
+            docker tag reachsh/reach-cli:latest  reachsh/reach-cli:${MAJOR}
+          fi
+  run_example_sh:
+    description: "example.sh <<parameters.which>>"
+    parameters:
+      which:
+        type: string
+    steps:
+      - run: |
+          cd examples && ../.circleci/example.sh <<parameters.which>>
+  run_example_record:
+    description: "Record outcome"
+    steps:
+      - run:
+          when: always
+          command: |
+            if [ ! -f /tmp/status ] ; then
+              echo 'export STATUS="fail"' > /tmp/status
+            fi
+            cat /tmp/status
+            mkdir -p /tmp/workspace/record
+            mv /tmp/status /tmp/workspace/record/${CIRCLE_JOB}
+  run_example_persist:
+    description: "Persist outcome"
+    steps:
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - record
   stack_deps:
     description: "Install stack dependencies"
     steps:
@@ -105,9 +162,9 @@ commands:
           fi
           # Reset locale
           sudo sh -c 'echo "LC_ALL=en_US.UTF-8" >> /etc/environment \
-                    && echo "en_US.UTF-8 UTF-8"  >> /etc/locale.gen \
-                    && echo "LANG=en_US.UTF-8"    > /etc/locale.conf \
-                    && locale-gen en_US.UTF-8'
+                   && echo "en_US.UTF-8 UTF-8"  >> /etc/locale.gen \
+                   && echo "LANG=en_US.UTF-8"    > /etc/locale.conf \
+                   && locale-gen en_US.UTF-8'
           # Setup package
           (cd hs && make package.yaml)
       - restore_cache:
@@ -216,7 +273,10 @@ jobs:
         (cd js && make build)
         (cd js/stdlib && make check)
         mkdir -p /tmp/workspace/docker
-        docker save reachsh/runner:latest | gzip > /tmp/workspace/docker/runner.tar.gz
+        docker save reachsh/runner:latest     | gzip > /tmp/workspace/docker/runner.tar.gz
+        docker save reachsh/rpc-server:latest | gzip > /tmp/workspace/docker/rpc-server.tar.gz
+        docker save reachsh/reach:latest      | gzip > /tmp/workspace/docker/reach.tar.gz
+        docker save reachsh/reach-cli:latest  | gzip > /tmp/workspace/docker/reach-cli.tar.gz
     - persist_to_workspace:
         root: /tmp/workspace/
         paths:
@@ -257,30 +317,36 @@ jobs:
     - run: |
         (cd js/dockerized-tests && make clean-test && sbin/test.sh)
     - slack_fail
-  "example":
+  "example-standard":
     parameters:
       which:
         description: "which example directory"
         type: string
+    environment:
+      REACH_CI_EXECUTOR: "standard"
     executor: standard
     steps:
     - checkout
     - restore_bin
-    - run: |
-        cd examples && ../.circleci/example.sh <<parameters.which>>
-    - run:
-        when: always
-        command: |
-          if [ ! -f /tmp/status ] ; then
-            echo 'export STATUS="fail"' > /tmp/status
-          fi
-          cat /tmp/status
-          mkdir -p /tmp/workspace/record
-          mv /tmp/status /tmp/workspace/record/${CIRCLE_JOB}
-    - persist_to_workspace:
-        root: /tmp/workspace
-        paths:
-          - record
+    - run_example_sh:
+        which: << parameters.which >>
+    - run_example_record
+    - run_example_persist
+  "example-adhoc-machine":
+    parameters:
+      which:
+        description: "which example directory"
+        type: string
+    environment:
+      REACH_CI_EXECUTOR: "adhoc-machine"
+    executor: adhoc-machine
+    steps:
+    - checkout
+    - restore_bin
+    - run_example_sh:
+        which: << parameters.which >>
+    - run_example_record
+    - run_example_persist
   "example-sink":
     executor: standard
     steps:

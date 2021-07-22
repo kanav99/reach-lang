@@ -1,13 +1,27 @@
 #!/bin/sh
 
 DEST=config.gen.yml
+ADHOC_MACHINE_EXS="tut-7 tut-7-rpc"
+
+executor () {
+  for ame in $ADHOC_MACHINE_EXS; do
+    case "$ame" in
+      "$1")
+        echo "example-adhoc-machine"
+        return
+        ;;
+    esac
+  done
+  echo "example-standard"
+}
 
 cat config.pre.yml > "${DEST}"
 for ep in ../examples/* ; do
   if [ -d "${ep}" ] ; then
+
     e=$(basename "${ep}")
     cat >>"${DEST}" <<END
-    - "example":
+    - "$(executor "${e}")":
         name: "examples.${e}"
         which: "${e}"
         requires:

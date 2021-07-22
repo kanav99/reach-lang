@@ -5,7 +5,7 @@ TMP=$(mktemp -d -p /tmp "reach.$(date -u '+%Y-%m-%dT%H-%M-%SZ')-XXXX")
 export TMP
 
 run_d () {
-  if [ "$CIRCLECI" = "true" ]; then
+  if [ "$CIRCLECI" = "true" ] && [ ! "$REACH_CI_EXECUTOR" = "adhoc-machine" ]; then
     REACH_EX="$0" ~/.local/bin/reach \
       --dir-embed="$(cd "$(dirname "$0")" && pwd)/hs/app/reach/embed" \
       --dir-project-container="$(pwd)" \
