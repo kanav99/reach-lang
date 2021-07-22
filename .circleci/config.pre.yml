@@ -98,6 +98,7 @@ commands:
     steps:
       - workattach
       - run: |
+          source ./VERSION
           zcat /tmp/workspace/docker/rpc-server.tar.gz | docker load
           zcat /tmp/workspace/docker/reach.tar.gz      | docker load
           zcat /tmp/workspace/docker/reach-cli.tar.gz  | docker load
