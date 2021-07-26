@@ -103,7 +103,6 @@ commands:
   restore_img_adhoc_machine:
     description: "Restore ad-hoc machine Docker images"
     steps:
-      - workattach
       - run: |
           source ./VERSION
           zcat /tmp/workspace/docker/rpc-server.tar.gz | docker load
